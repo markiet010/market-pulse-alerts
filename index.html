@@ -2,95 +2,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Market Pulse Alerts</title>
-
-  
-<script>
-(() => {
-  const oldCard = document.getElementById("gold-live-card");
-  if (oldCard) oldCard.remove();
-
-  const card = document.createElement("section");
-  card.id = "gold-live-card";
-
-  card.style.cssText =
-    "background:#172554;color:white;padding:22px;" +
-    "margin:18px 0;border-radius:14px;" +
-    "font-family:Arial,sans-serif;text-align:center;";
-
-  card.innerHTML = `
-    <h2>Gold (XAUUSD) Live Price</h2>
-    <div id="gold-live-price"
-      style="font-size:32px;font-weight:bold;margin:15px 0">
-      Connecting...
-    </div>
-    <p id="gold-live-status">Connecting to price service...</p>
-    <small>USD per troy ounce | Spot reference</small>
-  `;
-
-  const placeholder = [...document.querySelectorAll("p,div,span")]
-    .find(el =>
-      el.children.length === 0 &&
-      el.textContent.toLowerCase().includes(
-        "live price feed not connected"
-      )
-    );
-
-  const heading = [...document.querySelectorAll("h1,h2,h3")]
-    .find(el => el.textContent.includes("Gold (XAUUSD)"));
-
-  if (placeholder) {
-    placeholder.replaceWith(card);
-  } else if (heading) {
-    heading.insertAdjacentElement("afterend", card);
-  } else {
-    document.body.appendChild(card);
-  }
-
-  async function updateGoldPrice() {
-    const priceBox = document.getElementById("gold-live-price");
-    const statusBox = document.getElementById("gold-live-status");
-
-    try {
-      const response = await fetch(
-        "https://api.gold-api.com/price/XAU",
-        { cache: "no-store" }
-      );
-
-      if (!response.ok) {
-        throw new Error("Price unavailable");
-      }
-
-      const data = await response.json();
-      const price = Number(data.price);
-
-      if (!Number.isFinite(price) || price <= 0) {
-        throw new Error("Invalid price");
-      }
-
-      priceBox.textContent = "$" + price.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-
-      statusBox.textContent =
-        "Last updated: " +
-        (data.updatedAtReadable || data.updatedAt || "Recently");
-
-    } catch (error) {
-      priceBox.textContent = "--";
-      statusBox.textContent =
-        "Price connection failed. Please refresh later.";
-      console.error("Gold price error:", error);
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Pulse Alerts</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #07111f;
+      color: #e5e7eb;
+      font-family: Arial, sans-serif;
     }
-  }
+    .container {
+      max-width: 950px;
+      margin: auto;
+    }
+    header {
+      padding: 25px 20px;
+      background: #102442;
+      border: 1px solid #263d5c;
+      border-radius: 16px;
+      margin-bottom: 20px;
+    }
+    h1 { margin: 0 0 8px; color: #60a5fa; }
+    .subtitle { color: #aabbd0; margin: 0; }
+    .card {
+      background: #111f33;
+      border: 1px solid #263d5c;
+      border-radius: 14px;
+      padding: 22px;
+      margin: 16px 0;
+    }
+    .card h2 { margin-top: 0; color: #93c5fd; }
+    .price {
+      font-size: 34px;
+      font-weight: bold;
+      color: #34d399;
+      margin: 18px 0;
+    }
+    .status { color: #aabbd0; }
+    .pending { color: #fbbf24; }
+    .footer {
+      text-align: center;
+      color: #8294aa;
+      padding: 20px 0;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Market Pulse Alerts</h1>
+      <p class="subtitle">Gold, Forex and Market Updates</p>
+    </header>
 
-  updateGoldPrice();
-  setInterval(updateGoldPrice, 30000);
-})();
-</script>
+    <section class="card">
+      <h2>Gold (XAUUSD) Live Price</h2>
+      <div class="price" id="gold-price">Loading...</div>
+      <p class="status" id="gold-status">
+        Connecting to gold price service...
+      </p>
+      <small>USD per troy ounce | Spot reference price</small>
+    </section>
 
+    <section class="card">
+      <h2>Forex Market</h2>
+      <p>Currency Market Updates</p>
+      <p class="pending">Live forex data connection pending.</p>
+    </section>
+
+    <section class="card">
+      <h2>Breaking News</h2>
+      <p>Latest financial and market news.</p>
+      <p class="pending">News service connection pending.</p>
+    </section>
+
+    <section class="card">
+      <h2>Market Alerts</h2>
+      <p>Gold and financial market alerts.</p>
+      <p class="pending">Alert service setup pending.</p>
+    </section>
+
+    <div class="footer">
+      Market Pulse Alerts | Gold spot price is for reference only.
+    </div>
+  </main>
+
+  <script>
+    async function updateGoldPrice() {
+      const priceBox = document.getElementById("gold-price");
+      const statusBox = document.getElementById("gold-status");
+
+      try {
+        const response = await fetch(
+          "https://api.gold-api.com/price/XAU",
+          { cache: "no-store" }
+        );
+
+        if (!response.ok) {
+          throw new Error("Price service unavailable");
+        }
+
+        const data = await response.json();
+        const price = Number(data.price);
+
+        if (!Number.isFinite(price) || price <= 0) {
+          throw new Error("Invalid price received");
+        }
+
+        priceBox.textContent = "$" + price.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+
+        statusBox.textContent = "Last updated: " +
+          (data.updatedAtReadable || data.updatedAt || "Recently");
+
+      } catch (error) {
+        priceBox.textContent = "--";
+        statusBox.textContent =
+          "Gold price unavailable. Please try again later.";
+        console.error("Gold price error:", error);
+      }
+    }
+
+    updateGoldPrice();
+    setInterval(updateGoldPrice, 30000);
+  </script>
 </body>
 </html>
